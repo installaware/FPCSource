@@ -28,6 +28,8 @@ interface
   uses
     procinfo,
     psub,
+    ogbase,
+    systems,
     aasmdata,aasmbase;
 
   type

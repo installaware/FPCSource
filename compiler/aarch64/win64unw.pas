@@ -76,9 +76,6 @@ type
     extra: word; // for offsets etc
   end;
 
-var
-  current_unw: TArm64WinCFI;
-
 function EncodeARM64Reg(r: TRegister): Byte;
 begin
   // Map FPC register enums to ARM64 register numbers, adjust as needed!

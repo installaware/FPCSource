@@ -936,6 +936,7 @@ implementation
        coffsecnames : array[TAsmSectiontype] of string[length('__DATA, __datacoal_nt,coalesced')] = ('','',
           '.text','.data','.rdata','.rdata','.bss','.tls',
           '.pdata',{pdata}
+          '.xdata',{ARM64/Windows unwind info}
           '.text', {stub}
           '.data',
           '.data',
@@ -1602,6 +1603,10 @@ const pemagic : array[0..3] of byte = (
         { section type user gives the user full controll on the section name }
         if atype=sec_user then
           result:=aname
+        else if atype=sec_xdata then
+          result:='.xdata'
+        else if atype=sec_pdata then
+          result:='.pdata'
         else
           begin
             { non-PECOFF targets lack rodata support }
@@ -3460,6 +3465,14 @@ const pemagic : array[0..3] of byte = (
         exesec:=FindExeSection('.pdata');
         if exesec=nil then
           exit;
+        if target_info.system = system_aarch64_win64 then
+        begin
+          xdatasec := FindExeSection('.xdata');
+          if xdatasec = nil then
+            xdatasec := AddExeSection('.xdata'); // ensure .xdata is present
+          xdatasec.Flags := peencodesechdrflags([oso_data, oso_load], SectionDataAlign);
+          xdatasec.Align := SectionDataAlign;
+        end;
         for i:=0 to exesec.ObjSectionList.Count-1 do
           begin
             objsec:=TObjSection(exesec.ObjSectionList[i]);

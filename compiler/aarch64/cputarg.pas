@@ -49,6 +49,7 @@ implementation
     {$endif}
     {$ifndef NOTARGETWIN64}
       ,t_win
+      ,win64unw
     {$endif}
     {$ifndef NOTARGETEMBEDDED}
       ,t_embed

@@ -40,9 +40,9 @@ interface
       constructor create(aparent: tprocinfo); override;
       destructor destroy; override;
       procedure set_first_temp_offset; override;
-      procedure add_finally_scope(startlabel,endlabel,handler:TAsmSymbol;implicit:Boolean);
-      procedure add_except_scope(trylabel,exceptlabel,endlabel,filter:TAsmSymbol);
-      procedure dump_scopes(list:tasmlist);
+      procedure add_finally_scope(startlabel,endlabel,handler:TAsmSymbol;implicit:Boolean; objdata: TObjData);
+      procedure add_except_scope(trylabel,exceptlabel,endlabel,filter:TAsmSymbol; objdata: TObjData);
+      procedure dump_scopes(list:tasmlist; objdata: TObjData);
     end;
 
 implementation
@@ -53,7 +53,8 @@ implementation
     symtable,
     tgobj,
     cpubase,
-    aasmtai;
+    aasmtai,
+    win64unw;
 
   const
     SCOPE_FINALLY=0;
@@ -87,11 +88,23 @@ implementation
      tg.setfirsttemp(align(maxpushedparasize,16));
     end;
 
-  procedure tcpuprocinfo.add_finally_scope(startlabel,endlabel,handler:TAsmSymbol;implicit:Boolean);
+  procedure tcpuprocinfo.add_finally_scope(startlabel,endlabel,handler:TAsmSymbol;implicit:Boolean; objdata: TObjData);
     begin
-      unwindflags:=unwindflags or 2;
-      if implicit then  { also needs catch functionality }
-        unwindflags:=unwindflags or 1;
+      if (target_info.system = system_aarch64_win64) then
+        begin
+          unwindflags:=unwindflags or 2;
+          if implicit then
+            unwindflags:=unwindflags or 1;
+          // ARM64/Win64: Use current_unw for Windows-specific unwind logic
+          if Assigned(current_unw) and Assigned(objdata) then
+            current_unw.StartFrame(objdata, procdef.mangledname);
+        end
+      else
+        begin
+          unwindflags:=unwindflags or 2;
+          if implicit then
+            unwindflags:=unwindflags or 1;
+        end;
       inc(scopecount);
       if scopes=nil then
         scopes:=TAsmList.Create;
@@ -105,9 +118,17 @@ implementation
       scopes.concat(tai_const.create_rva_sym(handler));
     end;
 
-  procedure tcpuprocinfo.add_except_scope(trylabel,exceptlabel,endlabel,filter:TAsmSymbol);
+  procedure tcpuprocinfo.add_except_scope(trylabel,exceptlabel,endlabel,filter:TAsmSymbol; objdata: TObjData);
     begin
-      unwindflags:=unwindflags or 3;
+      if (target_info.system = system_aarch64_win64) then
+        begin
+          unwindflags:=unwindflags or 3;
+          // ARM64/Win64: Use current_unw for Windows-specific unwind logic
+          if Assigned(current_unw) and Assigned(objdata) then
+            current_unw.StartFrame(objdata, procdef.mangledname);
+        end
+      else
+        unwindflags:=unwindflags or 3;
       inc(scopecount);
       if scopes=nil then
         scopes:=TAsmList.Create;
@@ -121,12 +142,19 @@ implementation
       scopes.concat(tai_const.create_rva_sym(endlabel));
     end;
 
-  procedure tcpuprocinfo.dump_scopes(list: tasmlist);
+  procedure tcpuprocinfo.dump_scopes(list: tasmlist; objdata: TObjData);
     var
       hdir: tai_seh_directive;
+
     begin
       if (scopecount=0) then
         exit;
+      if (target_info.system = system_aarch64_win64) then
+        begin
+          // ARM64/Win64: Use current_unw for Windows-specific unwind logic
+          if Assigned(current_unw) and Assigned(objdata) then
+            current_unw.EndFrame(objdata);
+        end;
       hdir:=cai_seh_directive.create_name(ash_handler,'__FPC_specific_handler');
       if not systemunit.iscurrentunit then
         current_module.add_extern_asmsym('__FPC_specific_handler',AB_EXTERNAL,AT_FUNCTION);
@@ -140,7 +168,6 @@ implementation
       { This creates a tai_align which is redundant here (although harmless) }
       new_section(list,sec_code,lower(procdef.mangledname),0);
     end;
-
 
 begin
   cprocinfo:=tcpuprocinfo;

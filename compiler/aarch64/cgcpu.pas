@@ -2200,7 +2200,7 @@ implementation
         list.concat(taicpu.op_none(A_RET));
         if (pi_has_unwind_info in current_procinfo.flags) then
           begin
-            tcpuprocinfo(current_procinfo).dump_scopes(list, nil);
+            tcpuprocinfo(current_procinfo).dump_scopes(list);
             list.concat(cai_seh_directive.create(ash_endproc));
           end;
       end;

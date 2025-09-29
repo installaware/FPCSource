@@ -341,7 +341,7 @@ procedure taarch64tryfinallynode.pass_generate_code;
 
     { generate the scope record in .xdata }
     tcpuprocinfo(current_procinfo).add_finally_scope(trylabel,endtrylabel,
-      current_asmdata.RefAsmSymbol(finalizepi.procdef.mangledname,AT_FUNCTION),catch_frame,nil);
+      current_asmdata.RefAsmSymbol(finalizepi.procdef.mangledname,AT_FUNCTION),catch_frame);
 
     if implicitframe then
       current_procinfo.CurrExitLabel:=oldexitlabel;
@@ -544,7 +544,7 @@ procedure taarch64tryexceptnode.pass_generate_code;
 
     emit_nop;
     cg.a_label(current_asmdata.CurrAsmList,endexceptlabel);
-    tcpuprocinfo(current_procinfo).add_except_scope(trylabel,exceptlabel,endexceptlabel,filterlabel,nil);
+    tcpuprocinfo(current_procinfo).add_except_scope(trylabel,exceptlabel,endexceptlabel,filterlabel);
 
 errorexit:
     { restore all saved labels }

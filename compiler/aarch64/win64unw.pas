@@ -20,6 +20,10 @@ uses
   cclasses,globtype,aasmbase,aasmdata,aasmtai,cgbase,ogbase;
 
 type
+  tai_seh_directive_aarch64 = class(tai_seh_directive)
+    procedure generate_code(objdata: TObjData); override;
+  end;
+
   TArm64WinCFI = class
   private
     FFrameOffs, FFrameReg: Integer;
@@ -320,7 +324,41 @@ begin
     objdata.SetSection(FXdataSec);
 end;
 
+{ tai_seh_directive_aarch64 }
+
+procedure tai_seh_directive_aarch64.generate_code(objdata: TObjData);
+begin
+  case kind of
+    ash_proc:
+      current_unw.StartFrame(objdata, data.name^);
+    ash_endproc:
+      current_unw.EndFrame(objdata);
+    ash_endprologue:
+      current_unw.EndPrologue(objdata);
+    ash_handler:
+      begin
+        current_unw.FHandler := objdata.symbolref(data.name^);
+        current_unw.FFlags := data.flags;
+      end;
+    ash_handlerdata:
+      current_unw.SwitchToHandlerData(objdata);
+    ash_setframe:
+      current_unw.SetFrame(objdata, data.reg, data.offset);
+    ash_stackalloc:
+      current_unw.StackAlloc(objdata, data.offset);
+    ash_pushreg:
+      current_unw.SaveReg(objdata, data.reg, data.offset);
+    ash_savereg:
+      current_unw.SaveReg(objdata, data.reg, data.offset);
+    ash_savexmm:
+      current_unw.SaveFReg(objdata, data.reg, data.offset);
+    else
+      InternalError(2025092901); // Undefined directive
+  end;
+end;
+
 initialization
+  cai_seh_directive := tai_seh_directive_aarch64;
   current_unw := TArm64WinCFI.Create;
 finalization
   current_unw.Free;

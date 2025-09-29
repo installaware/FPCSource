@@ -98,6 +98,7 @@ interface
         procedure g_stackpointer_alloc(list: TAsmList; localsize: longint);override;
         procedure g_proc_entry(list: TAsmList; localsize: longint; nostackframe: boolean);override;
         procedure g_proc_exit(list: TAsmList; parasize: longint; nostackframe: boolean);override;
+        procedure g_local_unwind(list: TAsmList; l: TAsmLabel);override;
         procedure g_maybe_got_init(list: TAsmList); override;
         procedure g_restore_registers(list: TAsmList);override;
         procedure g_save_registers(list: TAsmList);override;
@@ -2205,6 +2206,31 @@ implementation
           end;
       end;
 
+    procedure tcgaarch64.g_local_unwind(list: TAsmList; l: TAsmLabel);
+    var
+      para1, para2: tcgpara;
+      href: treference;
+      pd: tprocdef;
+    begin
+      if target_info.system<>system_aarch64_win64 then
+        begin
+          inherited g_local_unwind(list,l);
+          exit;
+        end;
+      pd:=search_system_proc('_fpc_local_unwind');
+      para1.init;
+      para2.init;
+      paramanager.getcgtempparaloc(list,pd,1,para1);
+      paramanager.getcgtempparaloc(list,pd,2,para2);
+      reference_reset_symbol(href,l,0,1,[]);
+      a_load_reg_cgpara(list,OS_ADDR,NR_STACK_POINTER_REG,para1);
+      a_loadaddr_ref_cgpara(list,href,para2);
+      paramanager.freecgpara(list,para2);
+      paramanager.freecgpara(list,para1);
+      g_call(list,'_FPC_local_unwind');
+      para2.done;
+      para1.done;
+    end;
 
     procedure tcgaarch64.g_save_registers(list : TAsmList);
       begin

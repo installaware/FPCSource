@@ -5821,7 +5821,7 @@ begin
 {$endif not DISABLE_TLS_DIRECTORY}
 
 {$ifndef DISABLE_WIN64_SEH}
-    if target_info.system=system_x86_64_win64 then
+    if target_info.system in [system_x86_64_win64,system_aarch64_win64] then
       def_system_macro('FPC_USE_WIN64_SEH');
 {$endif DISABLE_WIN64_SEH}
 

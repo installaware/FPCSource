@@ -936,7 +936,6 @@ implementation
        coffsecnames : array[TAsmSectiontype] of string[length('__DATA, __datacoal_nt,coalesced')] = ('','',
           '.text','.data','.rdata','.rdata','.bss','.tls',
           '.pdata',{pdata}
-          '.xdata',{ARM64/Windows unwind info}
           '.text', {stub}
           '.data',
           '.data',
@@ -1603,10 +1602,6 @@ const pemagic : array[0..3] of byte = (
         { section type user gives the user full controll on the section name }
         if atype=sec_user then
           result:=aname
-        else if atype=sec_xdata then
-          result:='.xdata'
-        else if atype=sec_pdata then
-          result:='.pdata'
         else
           begin
             { non-PECOFF targets lack rodata support }

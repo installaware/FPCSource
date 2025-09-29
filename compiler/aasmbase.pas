@@ -99,7 +99,6 @@ interface
          sec_user,
          sec_code,
          sec_data,
-         sec_xdata,
          { read-only, but may contain relocations }
          sec_rodata,
          { read-only and cannot contain relocations }

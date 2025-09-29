@@ -3460,14 +3460,6 @@ const pemagic : array[0..3] of byte = (
         exesec:=FindExeSection('.pdata');
         if exesec=nil then
           exit;
-        if target_info.system = system_aarch64_win64 then
-        begin
-          xdatasec := FindExeSection('.xdata');
-          if xdatasec = nil then
-            xdatasec := AddExeSection('.xdata'); // ensure .xdata is present
-          xdatasec.Flags := peencodesechdrflags([oso_data, oso_load], SectionDataAlign);
-          xdatasec.Align := SectionDataAlign;
-        end;
         for i:=0 to exesec.ObjSectionList.Count-1 do
           begin
             objsec:=TObjSection(exesec.ObjSectionList[i]);

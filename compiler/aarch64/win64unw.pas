@@ -328,6 +328,8 @@ end;
 
 procedure tai_seh_directive_aarch64.generate_code(objdata: TObjData);
 begin
+  write('tai_seh_directive_aarch64: ');
+  writeln(kind);
   case kind of
     ash_proc:
       current_unw.StartFrame(objdata, data.name^);

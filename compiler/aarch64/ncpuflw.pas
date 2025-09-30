@@ -187,10 +187,12 @@ constructor taarch64tryfinallynode.create_implicit(l, r: TNode);
         include(finalizepi.flags,pi_do_call);
         { the init/final code is messing with asm nodes, so inform the compiler about this }
         include(finalizepi.flags,pi_has_assembler_block);
+        include(finalizepi.flags,pi_do_call); // <--new
         finalizepi.allocate_push_parasize(32);
       end;
   end;
 
+(*
 function taarch64tryfinallynode.simplify(forinline: boolean): tnode;
   begin
     result:=inherited simplify(forinline);
@@ -207,6 +209,32 @@ function taarch64tryfinallynode.simplify(forinline: boolean): tnode;
         if implicitframe then
           begin
             current_procinfo.finalize_procinfo:=finalizepi;
+          end;
+      end;
+  end;
+*)
+
+function taarch64tryfinallynode.simplify(forinline: boolean): tnode;
+  begin
+    result:=inherited simplify(forinline);
+    if (target_info.system<>system_aarch64_win64) then
+      exit;
+    if (result=nil) then
+      begin
+        { actually, this is not really the right place to do a node transformation like this }
+        if not(assigned(finalizepi.code)) then
+          begin
+            finalizepi.code:=right;
+            foreachnodestatic(right,@copy_parasize,finalizepi);
+            right:=ccallnode.create(nil,tprocsym(finalizepi.procdef.procsym),nil,nil,[],nil);
+            firstpass(right);
+            { For implicit frames, no actual code is available at this time,
+              it is added later in assembler form. So store the nested procinfo
+              for later use. }
+            if implicitframe then
+              begin
+                current_procinfo.finalize_procinfo:=finalizepi;
+              end;
           end;
       end;
   end;

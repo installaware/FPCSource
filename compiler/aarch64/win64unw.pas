@@ -355,7 +355,7 @@ begin
     ash_savexmm:
       current_unw.SaveFReg(objdata, data.reg, data.offset);
     else
-      InternalError(2025092901); // Undefined directive
+      InternalError(2025100101); // Undefined directive
   end;
 end;
 

@@ -95,13 +95,13 @@ function WinTryEnterCriticalSection(var cs : TRTLCriticalSection):longint;
     procedure SysInitThreadvar(var offset : dword;size : dword);
       begin
         offset:=threadvarblocksize;
-      {$ifdef CPUARM}
-        // Data must be allocated at 4 bytes boundary for ARM
-        size:=(size + 3) and not dword(3);
-      {$endif CPUARM}
+      {$ifdef CPUAARCH64} // Specific to ARM64: align 8
+        size := (size + 7) and not dword(7);
+      {$else ifdef CPUARM} // ARM32: align 4
+        size := (size + 3) and not dword(3);
+      {$endif}
         inc(threadvarblocksize,size);
       end;
-
 
     procedure SysAllocateThreadVars; public name '_FPC_SysAllocateThreadVars';
       var
